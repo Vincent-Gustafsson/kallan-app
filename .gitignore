@@ -1,0 +1,10 @@
+**/__pycache__/
+.pyc
+
+.venv
+
+dev-dist/
+**/media/
+node_modules
+
+.env

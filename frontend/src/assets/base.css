@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: forest;
+}
+
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+html {
+  min-height: calc(100% + env(safe-area-inset-top));
+}
+
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
