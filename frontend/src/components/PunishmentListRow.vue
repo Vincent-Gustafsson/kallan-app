@@ -20,10 +20,10 @@ const formatDate = (isoDate: string) => {
   <li class="list-row">
     <div class="avatar-group -space-x-6">
       <div class="avatar size-14">
-        <img :src="p.initiator.avatar_url!" alt="Avatar" loading="lazy" />
+        <img :src="p.initiator.avatar_url || '/kallan.svg'" alt="Avatar" loading="lazy" />
       </div>
       <div class="avatar size-14">
-        <img :src="p.confirmer!.avatar_url!" alt="Avatar" loading="lazy" />
+        <img :src="p.confirmer!.avatar_url || '/kallan.svg'" alt="Avatar" loading="lazy" />
       </div>
     </div>
 

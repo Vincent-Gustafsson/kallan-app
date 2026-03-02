@@ -141,7 +141,7 @@ def create_event(request, payload: CreatePunishmentEventIn):
     def _notify():
         # 1) notify target
         title_t = f"{initiator_username} vill ge dig straff!"
-        body_t = f"Du fick {amount} straff."
+        body_t = f"{initiator_username} vill ge {amount} straff."
         if reason:
             body_t += f" Anledning: {reason}"
 
