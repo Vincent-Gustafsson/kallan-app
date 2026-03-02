@@ -27,7 +27,9 @@ services:
         command: ["/app/entrypoint.sh"]
 
     caddy:
-        build: ./caddy
+    build:
+        context: .
+        dockerfile: caddy/Dockerfile
         restart: unless-stopped
         depends_on:
             - web
