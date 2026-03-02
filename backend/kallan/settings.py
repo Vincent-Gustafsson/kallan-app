@@ -10,7 +10,6 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 allowed_hosts_env = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 ALLOWED_HOSTS = allowed_hosts_env.split(",")
 
-
 STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
 
@@ -18,6 +17,9 @@ STATIC_ROOT = Path(os.environ.get("DJANGO_STATIC_ROOT", BASE_DIR / "staticfiles"
 MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "media"))
 
 csrf_env = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in csrf_env.split(",") if origin.strip()
+]
 
 
 INSTALLED_APPS = [
