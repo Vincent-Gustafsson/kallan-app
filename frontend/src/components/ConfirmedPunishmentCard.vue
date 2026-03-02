@@ -24,12 +24,18 @@ const formatConfirmedAt = (isoDate: string) => {
         <!-- Left group: avatars + text -->
         <div class="flex items-center gap-3 min-w-0">
           <div class="flex items-center -space-x-2 shrink-0">
-            <ProfilePicture sizeClass="size-8" :avatarUrl="p.initiator.avatar_url!" />
-            <ProfilePicture sizeClass="size-8" :avatarUrl="p.confirmer!.avatar_url!" />
+            <ProfilePicture
+              sizeClass="size-8"
+              :avatarUrl="p.initiator.avatar_url || '/kallan.svg'"
+            />
+            <ProfilePicture
+              sizeClass="size-8"
+              :avatarUrl="p.confirmer!.avatar_url || '/kallan.svg'"
+            />
             <ProfilePicture
               sizeClass="size-8"
               ringColorClass="ring-error"
-              :avatarUrl="p.target.avatar_url!"
+              :avatarUrl="p.target.avatar_url || '/kallan.svg'"
             />
           </div>
 

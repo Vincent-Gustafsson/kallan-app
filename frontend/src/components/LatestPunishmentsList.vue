@@ -2,7 +2,6 @@
 import { computed, onMounted, watch, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { usePunishmentsStore } from "@/stores/punishments";
-import ProfilePicture from "@/components/ProfilePicture.vue";
 import AllPunishmentsModal from "@/components/AllPunishmentsModal.vue";
 import PunishmentListRow from "@/components/PunishmentListRow.vue";
 
