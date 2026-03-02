@@ -50,7 +50,7 @@ services:
         ports:
             - "8080:80"
         volumes:
-            - ./Caddyfile:/etc/caddy/Caddyfile:ro
+            - ./caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
 
     tunnel:
         image: cloudflare/cloudflared:latest

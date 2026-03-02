@@ -10,7 +10,14 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 allowed_hosts_env = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 ALLOWED_HOSTS = allowed_hosts_env.split(",")
 
-CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
+
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
+
+STATIC_ROOT = Path(os.environ.get("DJANGO_STATIC_ROOT", BASE_DIR / "staticfiles"))
+MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "media"))
+
+csrf_env = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "")
 
 
 INSTALLED_APPS = [
@@ -93,14 +100,9 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = "static/"
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
 
 VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")

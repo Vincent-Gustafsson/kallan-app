@@ -1,0 +1,53 @@
+services:
+    db:
+        image: postgres:16
+        restart: unless-stopped
+        env_file: .env.prod
+        volumes:
+            - kallan_db:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+
+    web:
+        build: ./backend
+        restart: unless-stopped
+        env_file: .env.prod
+        depends_on:
+            db:
+                condition: service_healthy
+        expose:
+            - "8000"
+        volumes:
+            - staticfiles:/srv/static
+            - media:/srv/media
+        command: ["/app/entrypoint.sh"]
+
+    caddy:
+        build: ./caddy
+        restart: unless-stopped
+        depends_on:
+            - web
+        volumes:
+            - staticfiles:/srv/static:ro
+            - media:/srv/media:ro
+            - caddy_data:/data
+            - caddy_config:/config
+
+    tunnel:
+        image: cloudflare/cloudflared:latest
+        restart: unless-stopped
+        depends_on:
+            - caddy
+        env_file: .env.prod
+        command: tunnel run --token ${CLOUDFLARED_TOKEN}
+
+volumes:
+    kallan_db:
+    staticfiles:
+    media:
+    caddy_data:
+    caddy_config:

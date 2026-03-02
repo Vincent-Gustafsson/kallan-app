@@ -16,7 +16,7 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    vueDevTools(),
+    //vueDevTools(),
     tailwindcss(),
     VitePWA({
       strategies: "injectManifest",
