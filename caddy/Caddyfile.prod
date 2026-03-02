@@ -1,6 +1,5 @@
 :80 {
-  encode zstd gzip
-
+  # Serve Django static + media directly (from shared volumes)
   handle_path /static/* {
     root * /srv/static
     file_server
@@ -11,14 +10,22 @@
     file_server
   }
 
-  @backend path /api* /admin*
-  handle @backend {
+  # Backend routes (Django API + Admin)
+  @django path /api/* /admin/*
+  handle @django {
     reverse_proxy web:8000 {
-      header_up X-Forwarded-Proto https
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-Host {host}
+      header_up X-Forwarded-For {remote}
     }
   }
 
-  root * /srv/frontend
-  try_files {path} /index.html
-  file_server
+  # Frontend SPA (Vue Router history mode)
+  handle {
+    reverse_proxy frontend:5173 {
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-Host {host}
+      header_up X-Forwarded-For {remote}
+    }
+  }
 }
