@@ -180,7 +180,7 @@ defineExpose({ playFromElement, playFromPoint, stop });
     v-if="isPlaying"
     aria-hidden="true"
     class="fixed inset-0 pointer-events-none overflow-hidden select-none"
-    :class="props.zIndex"
+    :class="props.zIndex ?? 'z-50'"
   >
     <div
       v-for="p in particles"

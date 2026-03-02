@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { useUsersStore } from "@/stores/users";
-import type { UserMini } from "@/lib/users/usersApi";
+import type { UserMini } from "@/lib/usersApi";
 
 const props = withDefaults(
   defineProps<{

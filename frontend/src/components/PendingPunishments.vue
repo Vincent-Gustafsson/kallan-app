@@ -38,7 +38,7 @@ function updateActiveFromScroll() {
   let bestDist = Number.POSITIVE_INFINITY;
 
   for (let i = 0; i < cards.length; i++) {
-    const r = cards[i].getBoundingClientRect();
+    const r = cards[i]!.getBoundingClientRect();
     const cardCenter = r.left + r.width / 2;
     const dist = Math.abs(cardCenter - scrollerCenter);
 

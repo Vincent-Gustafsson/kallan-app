@@ -37,7 +37,7 @@ self.addEventListener("notificationclick", (event) => {
       });
 
       if (windowClients.length > 0) {
-        const client = windowClients[0];
+        const client = windowClients[0]!;
         await client.focus();
         client.postMessage({ type: "NAVIGATE", to: path });
         return;

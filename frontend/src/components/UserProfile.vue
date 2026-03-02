@@ -10,7 +10,7 @@ const avatarUrl = computed(() => auth.user?.avatar_url ?? "/kallan.svg");
 
 const displayName = computed(() => {
   const u = auth.user?.username ?? "";
-  return u ? u[0].toUpperCase() + u.slice(1) : "";
+  return u ? u[0]!.toUpperCase() + u.slice(1) : "";
 });
 </script>
 
