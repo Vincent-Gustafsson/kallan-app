@@ -100,7 +100,7 @@ function spawn(x: number, y: number) {
       vr: rand(-720, 720),
       w,
       h,
-      color: pick(COLORS),
+      color: pick(COLORS)!,
       opacity: rand(0.85, 1),
     });
   }
