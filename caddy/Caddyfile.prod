@@ -1,7 +1,6 @@
 :80 {
   encode zstd gzip
 
-  # Serve Django static + media directly (from shared volumes)
   handle_path /static/* {
     root * /srv/static
     file_server
@@ -12,16 +11,13 @@
     file_server
   }
 
-  # Backend routes
-  @backend path /api/* /admin/*
+  @backend path /api* /admin*
   handle @backend {
     reverse_proxy web:8000 {
-      # Important when Cloudflare Tunnel terminates HTTPS at the edge:
       header_up X-Forwarded-Proto https
     }
   }
 
-  # Frontend SPA (Vue Router history mode)
   root * /srv/frontend
   try_files {path} /index.html
   file_server
