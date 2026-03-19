@@ -17,6 +17,13 @@ if ("serviceWorker" in navigator) {
       }
     }
   });
+
+  // Check for SW updates whenever the app becomes visible (e.g. switching back to installed PWA)
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      navigator.serviceWorker.getRegistration().then((reg) => reg?.update());
+    }
+  });
 }
 
 const app = createApp(App);
