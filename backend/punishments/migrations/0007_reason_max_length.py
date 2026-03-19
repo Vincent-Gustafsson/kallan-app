@@ -10,6 +10,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            "UPDATE punishments_punishmentevent SET reason = LEFT(reason, 50) WHERE LENGTH(reason) > 50;",
+            migrations.RunSQL.noop,
+        ),
         migrations.AlterField(
             model_name='punishmentevent',
             name='reason',
