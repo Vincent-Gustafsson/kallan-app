@@ -24,7 +24,7 @@ function makeDrop(): Drop {
   const delay = Math.random() * -12;
   const size = Math.random() * 1.5 + 1.5; // 1.5–3rem
   const rotationSpeed = Math.random() > 0.5 ? 1 : -1;
-  const src = props.avatarUrls[Math.floor(Math.random() * props.avatarUrls.length)];
+  const src = props.avatarUrls[Math.floor(Math.random() * props.avatarUrls.length)] ?? "";
 
   return {
     src,

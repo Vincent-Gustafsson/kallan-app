@@ -4,14 +4,6 @@ import UserStats from "@/components/UserStats.vue";
 import LatestPunishmentsList from "@/components/LatestPunishmentsList.vue";
 import SettingsButton from "@/components/SettingsButton.vue";
 import PushNotificationsPrompt from "@/components/PushNotificationsPrompt.vue";
-import GiveFikapinneModal from "@/components/GiveFikapinneModal.vue";
-import TakeFikapinneModal from "@/components/TakeFikapinneModal.vue";
-
-import { computed } from "vue";
-import { useAuthStore } from "@/stores/auth";
-
-const auth = useAuthStore();
-const showFika = computed(() => auth.canManageFikapinnar);
 </script>
 
 <template>
@@ -39,14 +31,30 @@ const showFika = computed(() => auth.canManageFikapinnar);
 
 <style scoped>
 @keyframes slide-from-left {
-  from { transform: translateX(-40px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 @keyframes slide-from-right {
-  from { transform: translateX(40px);  opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
-.anim-slide-left  { animation: slide-from-left  0.35s ease both; }
-.anim-slide-right { animation: slide-from-right 0.35s ease both 0.1s; }
+.anim-slide-left {
+  animation: slide-from-left 0.35s ease both;
+}
+.anim-slide-right {
+  animation: slide-from-right 0.35s ease both 0.1s;
+}
 </style>
