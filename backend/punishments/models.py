@@ -8,10 +8,10 @@ User = get_user_model()
 
 class PunishmentEventQuerySet(models.QuerySet):
     def delivered(self):
-        return self.filter(confirmer__isnull=False)
+        return self.filter(Q(confirmer__isnull=False) | Q(is_direct=True))
 
     def pending(self):
-        return self.filter(confirmer__isnull=True)
+        return self.filter(confirmer__isnull=True, is_direct=False)
 
     def for_target(self, user):
         return self.filter(target=user)
@@ -38,8 +38,9 @@ class PunishmentEvent(models.Model):
         blank=True,
     )
 
-    reason = models.TextField(blank=True, default="")
+    reason = models.CharField(max_length=50, blank=True, default="")
     amount = models.PositiveSmallIntegerField()
+    is_direct = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
@@ -47,6 +48,9 @@ class PunishmentEvent(models.Model):
     objects = PunishmentEventQuerySet.as_manager()
 
     class Meta:
+        permissions = [
+            ("direct_punish", "Can give punishments without a confirmer"),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=~Q(initiator=F("target")), name="pe_initiator_not_target"
@@ -63,7 +67,7 @@ class PunishmentEvent(models.Model):
 
     @property
     def stage(self) -> str:
-        return "pending" if self.confirmer_id is None else "confirmed"
+        return "pending" if (self.confirmer_id is None and not self.is_direct) else "confirmed"
 
     def confirm(self, user):
         if user.pk in {self.initiator_id, self.target_id}:

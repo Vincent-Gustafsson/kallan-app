@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { apiPunishmentStats, type PunishmentStats } from "@/lib/punishmentsApi";
 import { apiFikapinneStats, type FikapinneStats } from "@/lib/fikapinnarApi";
+import PunishmentIcon from "./PunishmentIcon.vue";
 
 const props = defineProps<{ userId?: number }>();
 
@@ -53,26 +54,14 @@ watch(effectiveUserId, () => load());
   <div class="stats shadow bg-base-100 w-full">
     <div class="stat p-4">
       <div class="stat-figure text-secondary">
-        <!-- trophy icon -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 320 512"
-          fill="currentColor"
-          class="size-8"
-        >
-          <path
-            d="M32.6 25.7C35.6 10.8 48.7 0 64 0L256 0c15.3 0 28.4 10.8 31.4 25.7L316.8 173c2.1 10.5 3.2 21.2 3.2 32l0 3c0 77.4-55 142-128 156.8l0 115.2 64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L64 544c-17.7 0-32-14.3-32-32s14.3-32 32-32l64 0 0-115.2C55 350 0 285.4 0 208l0-3c0-10.7 1.1-21.4 3.2-32L32.6 25.7zM77.4 128l165.1 0-12.8-64-139.5 0-12.8 64z"
-          />
-        </svg>
+        <PunishmentIcon size="size-8" class="fill-neutral-content" />
       </div>
 
       <div class="stat-title">Straff</div>
 
-      <div v-if="loading" class="stat-value text-neutral-content">
-        <span class="loading loading-spinner loading-sm"></span>
-      </div>
-      <div v-else class="stat-value text-neutral-content">
-        {{ stats?.total_amount ?? 0 }}
+      <div class="stat-value text-neutral-content min-h-10 flex items-center">
+        <span v-if="loading" class="loading loading-spinner loading-sm"></span>
+        <span v-else>{{ stats?.total_amount ?? 0 }}</span>
       </div>
 
       <div class="stat-desc">
@@ -85,23 +74,21 @@ watch(effectiveUserId, () => load());
       <div class="stat-figure text-secondary">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 512 512"
-          fill="currentColor"
-          class="size-8"
+          viewBox="0 0 384 512"
+          class="fill-neutral-content size-8"
         >
+          <!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
           <path
-            d="M257.5 27.6c-.8-5.4-4.9-9.8-10.3-10.6-22.1-3.1-44.6 .9-64.4 11.4l-74 39.5C89.1 78.4 73.2 94.9 63.4 115L26.7 190.6c-9.8 20.1-13 42.9-9.1 64.9l14.5 82.8c3.9 22.1 14.6 42.3 30.7 57.9l60.3 58.4c16.1 15.6 36.6 25.6 58.7 28.7l83 11.7c22.1 3.1 44.6-.9 64.4-11.4l74-39.5c19.7-10.5 35.6-27 45.4-47.2l36.7-75.5c9.8-20.1 13-42.9 9.1-64.9-.9-5.3-5.3-9.3-10.6-10.1-51.5-8.2-92.8-47.1-104.5-97.4-1.8-7.6-8-13.4-15.7-14.6-54.6-8.7-97.7-52-106.2-106.8z"
+            d="M335.1 160c.6-5.3 .9-10.6 .9-16 0-79.5-64.5-144-144-144S48 64.5 48 144c0 5.4 .3 10.7 .9 16l-.9 0c-26.5 0-48 21.5-48 48s21.5 48 48 48l288 0c26.5 0 48-21.5 48-48s-21.5-48-48-48l-.9 0zM64 304L169.2 529.5c4.1 8.8 13 14.5 22.8 14.5s18.6-5.7 22.8-14.5L320 304 64 304z"
           />
         </svg>
       </div>
 
       <div class="stat-title">Fikapinnar</div>
 
-      <div v-if="fikaLoading" class="stat-value text-neutral-content">
-        <span class="loading loading-spinner loading-sm"></span>
-      </div>
-      <div v-else class="stat-value text-neutral-content">
-        {{ fika?.total_amount ?? 0 }}
+      <div class="stat-value text-neutral-content min-h-10 flex items-center">
+        <span v-if="fikaLoading" class="loading loading-spinner loading-sm"></span>
+        <span v-else>{{ fika?.total_amount ?? 0 }}</span>
       </div>
 
       <div class="stat-desc">

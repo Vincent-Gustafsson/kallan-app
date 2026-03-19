@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 from django.contrib.auth import get_user_model
@@ -9,7 +9,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router, Schema
 from ninja.errors import HttpError
-from push.services import send_push_to_user
+from push.tasks import send_push_to_user_task, send_push_to_users_task
+from .tasks import expire_punishment_event
 from pydantic import Field
 
 from .models import (
@@ -47,7 +48,7 @@ class PunishmentEventOut(Schema):
 class CreatePunishmentEventIn(Schema):
     target_id: int
     amount: int = Field(ge=1, le=10)
-    reason: str = ""  # empty allowed
+    reason: str = Field("", max_length=50)
 
 
 class PunishmentStatsOut(Schema):
@@ -90,7 +91,6 @@ def _user_mini(u: Optional[User]) -> Optional[dict]:
 
 
 def _event_out(e: PunishmentEvent) -> dict:
-    is_pending = e.confirmer_id is None
     return {
         "id": e.id,
         "target": _user_mini(e.target),
@@ -100,7 +100,7 @@ def _event_out(e: PunishmentEvent) -> dict:
         "amount": e.amount,
         "created_at": e.created_at,
         "confirmed_at": e.confirmed_at,
-        "stage": "pending" if is_pending else "confirmed",
+        "stage": e.stage,
     }
 
 
@@ -121,7 +121,13 @@ def create_event(request, payload: CreatePunishmentEventIn):
     if payload.target_id == initiator.id:
         raise HttpError(400, "You cannot punish yourself.")
 
+    initiator_tier = getattr(initiator, "tier", None) or "bandana"
+    if initiator_tier == "bandana":
+        raise HttpError(403, "Bandanas cannot give punishments.")
+
     target = get_object_or_404(User, pk=payload.target_id)
+
+    is_direct = initiator.has_perm("punishments.direct_punish")
 
     try:
         e = PunishmentEvent.objects.create(
@@ -129,6 +135,8 @@ def create_event(request, payload: CreatePunishmentEventIn):
             initiator=initiator,
             reason=payload.reason or "",
             amount=payload.amount,
+            is_direct=is_direct,
+            confirmed_at=timezone.now() if is_direct else None,
         )
     except IntegrityError:
         raise HttpError(400, "Invalid punishment (constraint violation).")
@@ -138,38 +146,51 @@ def create_event(request, payload: CreatePunishmentEventIn):
     amount = e.amount
     reason = (e.reason or "").strip()
 
-    def _notify():
-        # 1) notify target
-        title_t = f"{initiator_username} vill ge dig straff!"
+    others_ids = list(
+        User.objects.filter(is_active=True)
+        .exclude(Q(id=initiator.id) | Q(id=target.id))
+        .values_list("id", flat=True)
+    )
+    _target_id = target.id
+    _event_id = e.id
+
+    # pre-compute everything needed for notifications before on_commit
+    if is_direct:
         body_t = f"Antal: {amount}"
         if reason:
             body_t += f" Anledning: {reason}"
+        payload_target = {"title": "Bongsköterskan gav dig straff!", "body": body_t, "url": "/punishments"}
 
-        send_push_to_user(
-            target,
-            {"title": title_t, "body": body_t, "url": "/punishments"},
-        )
+        body_o = f"Bongsköterskan gav {target_username} +{amount} straff."
+        if reason:
+            body_o += f" Anledning: {reason}"
+        payload_others = {"title": "Bongsköterskan gav straff", "body": body_o, "url": "/punishments"}
 
-        # 2) notify everyone else (exclude initiator + target)
-        others = User.objects.filter(is_active=True).exclude(
-            Q(id=initiator.id) | Q(id=target.id)
-        )
+        def _schedule():
+            send_push_to_user_task.delay(_target_id, payload_target, "punishment_confirmed")
+            send_push_to_users_task.delay(others_ids, payload_others, "punishment_confirmed")
+    else:
+        body_t = f"Antal: {amount}"
+        if reason:
+            body_t += f" Anledning: {reason}"
+        payload_target = {"title": f"{initiator_username} vill ge dig straff!", "body": body_t, "url": "/punishments"}
 
-        title_o = "Nytt straff-förslag"
         body_o = f"{initiator_username} vill ge {target_username} +{amount} straff."
         if reason:
             body_o += f" Anledning: {reason}"
+        payload_others = {"title": "Nytt straff-förslag", "body": body_o, "url": "/punishments"}
 
-        payload_o = {"title": title_o, "body": body_o, "url": "/punishments"}
+        def _schedule():
+            send_push_to_user_task.delay(_target_id, payload_target, "punishment_proposed")
+            send_push_to_users_task.delay(others_ids, payload_others, "punishment_proposed")
+            expire_punishment_event.apply_async(args=[_event_id], countdown=300)
 
-        for u in others.iterator():
-            send_push_to_user(u, payload_o)
-
-    transaction.on_commit(_notify)
+    transaction.on_commit(_schedule)
 
     e = PunishmentEvent.objects.select_related("target", "initiator", "confirmer").get(
         pk=e.pk
     )
+
     return 201, _event_out(e)
 
 
@@ -194,13 +215,13 @@ def list_events(
         return [_event_out(e) for e in qs]
 
     if pending == 1:
-        qs = qs.filter(confirmer__isnull=True)
+        qs = qs.pending()
         if limit is not None:
             qs = qs[:limit]
         return [_event_out(e) for e in qs]
 
     if confirmed == 1:
-        qs = qs.filter(confirmer__isnull=False)
+        qs = qs.delivered()
         if limit is not None:
             qs = qs[:limit]
 
@@ -265,30 +286,24 @@ def confirm_event(request, event_id: int):
         confirmer_username = confirmer.username
         target_username = target.username
 
-        def _notify_after_commit():
-            # target notification
-            title_t = "Straff bekräftat"
-            body_t = f"{confirmer_username} bekräftade straffet (+{amount})."
-            if reason:
-                body_t += f" Anledning: {reason}"
+        body_t = f"{confirmer_username} bekräftade straffet (+{amount})."
+        if reason:
+            body_t += f" Anledning: {reason}"
+        _payload_target = {"title": "Straff bekräftat", "body": body_t, "url": "/punishments"}
 
-            send_push_to_user(
-                target,
-                {"title": title_t, "body": body_t, "url": "/punishments"},
-            )
+        body_i = f"{confirmer_username} bekräftade straffet mot {target_username} (+{amount})."
+        if reason:
+            body_i += f" Anledning: {reason}"
+        _payload_initiator = {"title": "Ditt straff blev bekräftat", "body": body_i, "url": "/punishments"}
 
-            # initiator notification
-            title_i = "Ditt straff blev bekräftat"
-            body_i = f"{confirmer_username} bekräftade straffet mot {target_username} (+{amount})."
-            if reason:
-                body_i += f" Anledning: {reason}"
+        _target_id = target.id
+        _initiator_id = initiator.id
 
-            send_push_to_user(
-                initiator,
-                {"title": title_i, "body": body_i, "url": "/punishments"},
-            )
+        def _schedule():
+            send_push_to_user_task.delay(_target_id, _payload_target, "punishment_confirmed")
+            send_push_to_user_task.delay(_initiator_id, _payload_initiator, "punishment_confirmed")
 
-        transaction.on_commit(_notify_after_commit)
+        transaction.on_commit(_schedule)
 
     # fetch full output (including confirmer) AFTER the transaction
     e = PunishmentEvent.objects.select_related("target", "initiator", "confirmer").get(
@@ -327,22 +342,15 @@ def delete_event(request, event_id: int):
 
         e.delete()
 
-        def _notify_target_undone():
-            title = "Straff ångrat"
-            body = f"{initiator_username} ångrade straffet (+{amount})."
-            if reason:
-                body += f" Anledning: {reason}"
+        body = f"{initiator_username} ångrade straffet (+{amount})."
+        if reason:
+            body += f" Anledning: {reason}"
+        _payload = {"title": "Straff ångrat", "body": body, "url": "/punishments"}
+        _target_id = target.id
 
-            send_push_to_user(
-                target,
-                {
-                    "title": title,
-                    "body": body,
-                    "url": "/punishments",
-                },
-            )
-
-        transaction.on_commit(_notify_target_undone)
+        transaction.on_commit(
+            lambda: send_push_to_user_task.delay(_target_id, _payload, "punishment_cancelled")
+        )
 
     return 204, None
 
@@ -438,17 +446,16 @@ def take_punishment(request, payload: TakePunishmentIn):
         judge_username = judge.username
         amount = t.amount
 
-        def _notify_after_commit():
-            send_push_to_user(
-                target,
-                {
-                    "title": "Straff strukna",
-                    "body": f"{judge_username} strök {amount} straff från dig.",
-                    "url": "/",
-                },
-            )
+        _payload = {
+            "title": "Straff strukna",
+            "body": f"{judge_username} strök {amount} straff från dig.",
+            "url": "/",
+        }
+        _target_id = target.id
 
-        transaction.on_commit(_notify_after_commit)
+        transaction.on_commit(
+            lambda: send_push_to_user_task.delay(_target_id, _payload, "punishment_taken")
+        )
 
     t = TakePunishmentEvent.objects.select_related("target", "judge").get(pk=t.pk)
     return 201, _take_out(t)
@@ -488,17 +495,16 @@ def give_fikapinne(request, payload: GiveFikapinneIn):
 
     judge_username = judge.username
 
-    def _notify():
-        send_push_to_user(
-            target,
-            {
-                "title": "Du fick en fikapinne ☕️",
-                "body": f"{judge_username} gav dig en fikapinne.",
-                "url": "/",
-            },
-        )
+    _target_id = target.id
+    _payload = {
+        "title": "Du fick en fikapinne ☕️",
+        "body": f"{judge_username} gav dig en fikapinne.",
+        "url": "/",
+    }
 
-    transaction.on_commit(_notify)
+    transaction.on_commit(
+        lambda: send_push_to_user_task.delay(_target_id, _payload, "fikapinne_given")
+    )
 
     return HttpResponse(status=201)
 
@@ -533,17 +539,17 @@ def take_fikapinnar(request, payload: TakeFikapinneIn):
 
     judge_username = judge.username
 
-    def _notify():
-        send_push_to_user(
-            target,
-            {
-                "title": "Fikapinnar borttagna",
-                "body": f"{judge_username} tog bort {payload.amount} fikapinnar.",
-                "url": "/",
-            },
-        )
+    _target_id = target.id
+    _fikapinne_amount = payload.amount
+    _payload = {
+        "title": "Fikapinnar borttagna",
+        "body": f"{judge_username} tog bort {_fikapinne_amount} fikapinnar.",
+        "url": "/",
+    }
 
-    transaction.on_commit(_notify)
+    transaction.on_commit(
+        lambda: send_push_to_user_task.delay(_target_id, _payload, "fikapinne_taken")
+    )
 
     return HttpResponse(status=201)
 

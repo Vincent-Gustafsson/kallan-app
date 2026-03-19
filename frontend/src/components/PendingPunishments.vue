@@ -41,7 +41,6 @@ function updateActiveFromScroll() {
     const r = cards[i]!.getBoundingClientRect();
     const cardCenter = r.left + r.width / 2;
     const dist = Math.abs(cardCenter - scrollerCenter);
-
     if (dist < bestDist) {
       bestDist = dist;
       best = i;
@@ -57,7 +56,6 @@ let settleTimer: number | null = null;
 function onScroll() {
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(updateActiveFromScroll);
-
   if (settleTimer) window.clearTimeout(settleTimer);
   settleTimer = window.setTimeout(updateActiveFromScroll, 120);
 }
@@ -84,13 +82,30 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="w-full">
-    <div class="pb-2 text-md opacity-60 tracking-wide">Väntande straff</div>
+    <p class="text-xs font-semibold opacity-50 tracking-widest uppercase mb-2 px-1">
+      Föreslagna straff
+    </p>
 
-    <div v-if="punishStore.loadingPending" class="px-4 pb-4">
-      <span class="loading loading-spinner"></span>
-    </div>
+    <template v-if="punishStore.loadingPending">
+      <!-- Skeleton card -->
+      <div class="card bg-base-100 shadow-md rounded-box p-5 flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <div class="flex -space-x-2 shrink-0">
+            <div class="skeleton size-11 rounded-full"></div>
+            <div class="skeleton size-11 rounded-full"></div>
+          </div>
+          <div class="flex-1 flex flex-col gap-1.5">
+            <div class="skeleton h-4 w-36"></div>
+            <div class="skeleton h-3 w-20"></div>
+          </div>
+          <div class="skeleton h-8 w-12 rounded-lg shrink-0"></div>
+        </div>
+        <div class="skeleton h-16 w-full rounded-xl"></div>
+        <div class="skeleton h-10 w-full rounded-lg"></div>
+      </div>
+    </template>
 
-    <div v-else class="pb-2">
+    <template v-else>
       <div
         ref="scroller"
         class="relative overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory"
@@ -108,24 +123,24 @@ onBeforeUnmount(() => {
             :data-card-index="i"
             @confetti="playConfettiAt"
           />
-
-          <li v-if="items.length === 0" class="opacity-60 text-sm py-2">Inga väntande straff 🎉</li>
         </ul>
       </div>
 
-      <div v-if="showDots" class="mt-2 flex justify-center gap-2">
+      <div v-if="showDots" class="mt-3 flex justify-center gap-2">
         <button
           v-for="(_, i) in items"
           :key="i"
-          class="h-2 w-2 rounded-full transition-opacity"
-          :class="i === activeIndex ? 'bg-base-content opacity-70' : 'bg-base-content opacity-30'"
+          class="h-2 rounded-full transition-all duration-200"
+          :class="
+            i === activeIndex ? 'w-4 bg-primary opacity-80' : 'w-2 bg-base-content opacity-30'
+          "
           @click="scrollToIndex(i)"
           aria-label="Go to item"
         />
       </div>
-    </div>
+    </template>
 
-    <div v-if="punishStore.error" class="px-4 pb-4 text-sm text-error">
+    <div v-if="punishStore.error" class="text-sm text-error mt-2 px-1">
       {{ punishStore.error }}
     </div>
     <ConfettiBurst ref="burst" :count="180" :duration-ms="1500" z-index="z-[9999]" />

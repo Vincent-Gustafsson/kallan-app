@@ -25,6 +25,8 @@ export const useAuthStore = defineStore("auth", {
     myTier: (s) => s.user?.tier || "bandana",
     canManageFikapinnar: (s) =>
       (s.user?.permissions ?? []).includes("punishments.manage_fikapinnar"),
+    canDirectPunish: (s) =>
+      (s.user?.permissions ?? []).includes("punishments.direct_punish"),
   },
 
   actions: {

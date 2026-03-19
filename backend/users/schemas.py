@@ -8,6 +8,11 @@ class UserMiniOut(Schema):
     tier: str
 
 
+class UserWithStatsOut(UserMiniOut):
+    punishment_count: int
+    fikapinne_count: int
+
+
 class MeOut(UserMiniOut):
     force_password_reset: bool
     permissions: list[str]

@@ -10,6 +10,8 @@ import SetPasswordView from "@/views/SetPasswordView.vue";
 import PunishmentsView from "@/views/PunishmentsView.vue";
 import PeopleView from "@/views/PeopleView.vue";
 import ProfileView from "@/views/ProfileView.vue";
+import CreateEventView from "@/views/CreateEventView.vue";
+import WorkView from "@/views/WorkView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +28,15 @@ const router = createRouter({
       path: "/",
       name: "home",
       component: HomeView,
+      beforeEnter: async () => {
+        const usersStore = useUsersStore();
+        if (!usersStore.loading) usersStore.fetch({ q: "", excludeMe: true });
+      },
+    },
+    {
+      path: "/create",
+      name: "create-event",
+      component: CreateEventView,
       beforeEnter: async () => {
         const usersStore = useUsersStore();
         if (!usersStore.loading) usersStore.fetch({ q: "", excludeMe: true });
@@ -53,6 +64,7 @@ const router = createRouter({
       },
     },
     { path: "/users/:id", name: "user", component: ProfileView },
+    { path: "/work", name: "work", component: WorkView },
   ],
 });
 

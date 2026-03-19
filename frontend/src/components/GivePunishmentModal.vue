@@ -35,9 +35,11 @@ const selectedUser = computed(() =>
     : (usersStore.users.find((u) => u.id === selectedUserId.value) ?? null),
 );
 
+const MAX_REASON = 50;
+
 const canNext = computed(() => {
   if (step.value === 1) return selectedUserId.value != null;
-  if (step.value === 2) return true; // allow empty reason
+  if (step.value === 2) return reason.value.length <= MAX_REASON;
   if (step.value === 3) return true;
   return false;
 });
@@ -140,6 +142,12 @@ async function submit() {
             placeholder="Anledning"
             :disabled="submitting"
           />
+          <div class="flex justify-end">
+            <span
+              class="text-xs"
+              :class="reason.length > MAX_REASON ? 'text-error' : 'text-base-content/50'"
+            >{{ reason.length }} / {{ MAX_REASON }}</span>
+          </div>
         </div>
 
         <!-- STEP 3: amount -->

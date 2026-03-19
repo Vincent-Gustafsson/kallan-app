@@ -13,10 +13,13 @@ const route = useRoute();
 const usersStore = useUsersStore();
 const { selected, loadingSelected, selectedError } = storeToRefs(usersStore);
 
-const userId = computed(() => Number(route.params.id));
+const userId = computed(() => {
+  const n = Number(route.params.id);
+  return Number.isFinite(n) ? n : undefined;
+});
 
 async function load() {
-  if (!Number.isFinite(userId.value)) return;
+  if (!userId.value) return;
   await usersStore.fetchOne(userId.value);
 }
 
@@ -29,27 +32,45 @@ const displayName = computed(() => selected.value?.username || "");
 
 <template>
   <div class="min-h-dvh bg-base-300 flex flex-col items-center justify-center px-4 gap-8">
-    <div v-if="loadingSelected" class="loading loading-spinner loading-lg"></div>
 
-    <div v-else-if="selectedError" class="alert alert-error">
+    <div v-if="selectedError" class="alert alert-error w-full max-w-sm">
       <span>{{ selectedError }}</span>
     </div>
 
-    <template v-else-if="selected">
-      <div class="flex flex-col items-center gap-4">
-        <ProfilePicture :avatarUrl="avatarUrl" />
-        <h1 class="text-4xl font-bold">{{ displayName }}</h1>
+    <template v-else>
+      <!-- Profile header — skeleton while loading, real content when ready -->
+      <div class="flex flex-col items-center gap-4 anim-slide-right">
+        <div v-if="loadingSelected" class="avatar">
+          <div class="size-30 rounded-full skeleton"></div>
+        </div>
+        <ProfilePicture v-else :avatarUrl="avatarUrl" />
+
+        <div v-if="loadingSelected" class="skeleton h-10 w-36 rounded-lg"></div>
+        <h1 v-else class="text-4xl font-bold capitalize">{{ displayName }}</h1>
       </div>
 
-      <!-- pass the userId down so these components can query stats/punishments for that user -->
-      <UserStats :userId="selected.id" />
-
+      <!-- Stats and list receive userId from route immediately, no waiting for selected -->
+      <UserStats :userId="userId" class="anim-slide-left" />
       <LatestPunishmentsList
-        :userId="selected.id"
-        :title="`${selected.username}s senaste straff`"
+        :userId="userId"
+        :title="selected ? `${selected.username}s senaste straff` : 'Senaste straff'"
+        class="anim-slide-right"
       />
     </template>
 
-    <div v-else class="opacity-70">User not found.</div>
   </div>
 </template>
+
+<style scoped>
+@keyframes slide-from-left {
+  from { transform: translateX(-40px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes slide-from-right {
+  from { transform: translateX(40px);  opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+.anim-slide-left  { animation: slide-from-left  0.35s ease both; }
+.anim-slide-right { animation: slide-from-right 0.35s ease both 0.1s; }
+</style>

@@ -24,3 +24,27 @@ class WebPushSubscription(models.Model):
             "endpoint": self.endpoint,
             "keys": {"p256dh": self.p256dh, "auth": self.auth},
         }
+
+
+class NotificationPreferences(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notification_prefs",
+    )
+
+    # Fine-grained per-type toggles (all enabled by default)
+    punishment_proposed = models.BooleanField(default=True)
+    punishment_confirmed = models.BooleanField(default=True)
+    punishment_cancelled = models.BooleanField(default=True)
+    punishment_taken = models.BooleanField(default=True)
+    fikapinne_given = models.BooleanField(default=True)
+    fikapinne_taken = models.BooleanField(default=True)
+
+    @classmethod
+    def for_user(cls, user) -> "NotificationPreferences":
+        prefs, _ = cls.objects.get_or_create(user=user)
+        return prefs
+
+    def is_enabled(self, notification_type: str) -> bool:
+        return bool(getattr(self, notification_type, True))

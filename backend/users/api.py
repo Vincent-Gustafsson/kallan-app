@@ -9,7 +9,10 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.security import SessionAuth
 
-from users.schemas import MeOut, UserMiniOut
+from django.db.models import Count, Sum
+
+from punishments.models import FikapinneEvent, PunishmentEvent, TakeFikapinneEvent, TakePunishmentEvent
+from users.schemas import MeOut, UserMiniOut, UserWithStatsOut
 from users.utils import user_to_mini
 
 User = get_user_model()
@@ -99,14 +102,13 @@ def set_avatar(request, avatar: UploadedFile = File(...)):
     return data
 
 
-@router.get("", response=list[UserMiniOut])
+@router.get("", response=list[UserWithStatsOut])
 def list_users(
     request,
     q: str | None = None,
     exclude_me: bool = True,
     limit: int = 50,
 ):
-    # request.auth is set by your global API auth (SessionAuthNoForcedReset)
     me = request.auth
 
     if limit < 1 or limit > 50:
@@ -122,8 +124,48 @@ def list_users(
         if q:
             qs = qs.filter(username__icontains=q)
 
-    qs = qs.order_by("username")[:limit]
-    return [user_to_mini(request, u) for u in qs]
+    users_list = list(qs.order_by("username")[:limit])
+    if not users_list:
+        return []
+
+    user_ids = [u.id for u in users_list]
+
+    delivered = dict(
+        PunishmentEvent.objects.filter(target_id__in=user_ids, confirmer__isnull=False)
+        .values("target_id")
+        .annotate(total=Sum("amount"))
+        .values_list("target_id", "total")
+    )
+    taken_punishments = dict(
+        TakePunishmentEvent.objects.filter(target_id__in=user_ids)
+        .values("target_id")
+        .annotate(total=Sum("amount"))
+        .values_list("target_id", "total")
+    )
+    given_fika = dict(
+        FikapinneEvent.objects.filter(target_id__in=user_ids)
+        .values("target_id")
+        .annotate(total=Count("id"))
+        .values_list("target_id", "total")
+    )
+    taken_fika = dict(
+        TakeFikapinneEvent.objects.filter(target_id__in=user_ids)
+        .values("target_id")
+        .annotate(total=Sum("amount"))
+        .values_list("target_id", "total")
+    )
+
+    results = []
+    for u in users_list:
+        data = user_to_mini(request, u)
+        d = int(delivered.get(u.id, 0) or 0)
+        t = int(taken_punishments.get(u.id, 0) or 0)
+        data["punishment_count"] = max(0, d - t)
+        gf = int(given_fika.get(u.id, 0) or 0)
+        tf = int(taken_fika.get(u.id, 0) or 0)
+        data["fikapinne_count"] = max(0, gf - tf)
+        results.append(data)
+    return results
 
 
 @router.get("/{user_id}", response=UserMiniOut)

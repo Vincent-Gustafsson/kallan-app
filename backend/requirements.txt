@@ -4,3 +4,4 @@ django-ninja
 Pillow
 pywebpush
 gunicorn
+celery[redis]

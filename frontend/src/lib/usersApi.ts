@@ -3,6 +3,8 @@ export type UserMini = {
   username: string;
   avatar_url: string | null;
   tier: "vest" | "hat" | "bandana";
+  punishment_count?: number;
+  fikapinne_count?: number;
 };
 
 async function errorFrom(res: Response, fallback: string) {

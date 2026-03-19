@@ -27,6 +27,8 @@
                         django-stubs
                         psycopg2-binary
                         pywebpush
+                        gunicorn
+                        celery
                     ]
                 );
             in

@@ -48,7 +48,7 @@ function openAll() {
     <!-- modal lives here so it knows which userId/title to use -->
     <AllPunishmentsModal ref="allModal" :userId="effectiveUserId ?? undefined" />
 
-    <ul class="list bg-base-100 w-full rounded-box shadow-md">
+    <ul class="list bg-base-100 w-full rounded-box shadow-md overflow-hidden">
       <div class="flex items-center justify-between p-4 pb-2">
         <li class="text-xs opacity-60 tracking-wide">
           {{ headerText }}
@@ -60,35 +60,68 @@ function openAll() {
       </div>
 
       <template v-if="punish.loadingConfirmed">
-        <li v-for="i in LIMIT" :key="'sk-' + i" class="list-row">
-          <div class="avatar-group -space-x-6">
-            <div class="avatar"><div class="size-12 bg-base-200 rounded-box"></div></div>
-            <div class="avatar"><div class="size-12 bg-base-200 rounded-box"></div></div>
+        <li v-for="i in LIMIT" :key="'sk-' + i" class="list-row items-center">
+          <div class="relative w-12 h-12 shrink-0">
+            <div class="skeleton size-9 rounded-full absolute top-0 left-0"></div>
+            <div class="skeleton size-9 rounded-full absolute bottom-0 right-0"></div>
           </div>
 
-          <div class="min-w-0">
-            <div class="h-4 w-40 bg-base-200 rounded mb-2"></div>
-            <div class="h-3 w-28 bg-base-200 rounded mb-2"></div>
-            <div class="h-3 w-56 bg-base-200 rounded"></div>
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            <div class="skeleton h-4 w-40"></div>
+            <div class="skeleton h-3 w-28"></div>
           </div>
 
-          <div class="badge badge-neutral opacity-30">+?</div>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <div class="skeleton h-3 w-16 rounded"></div>
+            <div class="skeleton h-4 w-10 rounded"></div>
+          </div>
         </li>
       </template>
 
       <template v-else>
-        <PunishmentListRow v-for="p in items" :key="p.id" :p="p" />
+        <PunishmentListRow
+          v-for="(p, idx) in items"
+          :key="p.id"
+          :p="p"
+          class="punch-row"
+          :style="{ '--delay': `${idx * 0.06}s` }"
+        />
 
         <li
           v-for="i in fillerCount"
           :key="'fill-' + i"
-          class="list-row opacity-0 pointer-events-none"
+          class="list-row items-center invisible pointer-events-none"
           aria-hidden="true"
         >
-          <div class="h-12"></div>
-          <div><div class="h-4 w-24 bg-base-200 rounded"></div></div>
+          <div class="relative w-12 h-12 shrink-0"></div>
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            <div class="h-4 w-40"></div>
+            <div class="h-3 w-28"></div>
+          </div>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <div class="h-3 w-16"></div>
+            <div class="h-4 w-10"></div>
+          </div>
         </li>
       </template>
     </ul>
   </div>
 </template>
+
+<style scoped>
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+:deep(.punch-row) {
+  animation: slide-in-left 0.3s ease both;
+  animation-delay: var(--delay, 0s);
+}
+</style>
