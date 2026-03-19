@@ -24,5 +24,11 @@
         root * /srv/frontend
         try_files {path} /index.html
         file_server
+
+        @no-cache path /index.html /sw.js /sw.mjs /manifest.webmanifest /registerSW.js
+        header @no-cache Cache-Control "no-cache, no-store, must-revalidate"
+
+        @immutable path_regexp \.(js|css|png|jpg|svg|woff2?)$
+        header @immutable Cache-Control "public, max-age=31536000, immutable"
     }
 }
