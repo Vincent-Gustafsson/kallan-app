@@ -86,10 +86,11 @@ const groups = computed(() => {
             >
               <ProfilePicture sizeClass="size-10" :avatarUrl="user.avatar_url || '/kallan.svg'" />
 
-              <div class="flex-1 min-w-0 flex items-center">
+              <div class="flex-1 min-w-0 flex items-center gap-2">
                 <span style="font-size: 1rem" class="font-semibold truncate capitalize">{{
                   user.username
                 }}</span>
+                <span v-if="user.is_bongskoterska" class="badge badge-accent badge-xs shrink-0">Bongsköterska</span>
               </div>
 
               <div class="flex items-center gap-3 shrink-0 text-base-content/70">

@@ -5,6 +5,7 @@ export type UserMini = {
   tier: "vest" | "hat" | "bandana";
   punishment_count?: number;
   fikapinne_count?: number;
+  is_bongskoterska?: boolean;
 };
 
 async function errorFrom(res: Response, fallback: string) {

@@ -164,6 +164,7 @@ def list_users(
         gf = int(given_fika.get(u.id, 0) or 0)
         tf = int(taken_fika.get(u.id, 0) or 0)
         data["fikapinne_count"] = max(0, gf - tf)
+        data["is_bongskoterska"] = "punishments.direct_punish" in data.get("permissions", [])
         results.append(data)
     return results
 
