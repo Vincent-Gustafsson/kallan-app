@@ -131,7 +131,7 @@ def list_users(
     user_ids = [u.id for u in users_list]
 
     delivered = dict(
-        PunishmentEvent.objects.filter(target_id__in=user_ids, confirmer__isnull=False)
+        PunishmentEvent.objects.delivered().filter(target_id__in=user_ids)
         .values("target_id")
         .annotate(total=Sum("amount"))
         .values_list("target_id", "total")

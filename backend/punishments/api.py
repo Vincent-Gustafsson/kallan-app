@@ -374,9 +374,8 @@ def punishment_stats(request, target_id: int | None = None):
         datetime.combine(next_week_start, datetime.min.time()), tz
     )
 
-    delivered = PunishmentEvent.objects.filter(
+    delivered = PunishmentEvent.objects.delivered().filter(
         target_id=target_id,
-        confirmer__isnull=False,
     )
 
     delivered_total = delivered.aggregate(s=Sum("amount"))["s"] or 0
@@ -418,8 +417,8 @@ def take_punishment(request, payload: TakePunishmentIn):
         )
 
         delivered_total = (
-            PunishmentEvent.objects.filter(
-                target=target, confirmer__isnull=False
+            PunishmentEvent.objects.delivered().filter(
+                target=target
             ).aggregate(s=Sum("amount"))["s"]
             or 0
         )

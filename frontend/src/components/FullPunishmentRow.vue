@@ -42,7 +42,7 @@ const formatDate = (isoDate: string) => {
     <!-- Main content -->
     <div class="min-w-0 flex-1">
       <div class="text-sm font-semibold truncate">{{ p.target.username }}</div>
-      <div class="text-xs truncate">
+      <div class="text-xs">
         <template v-if="p.confirmer"
           ><span class="opacity-50"
             >{{ p.initiator.username }} & {{ p.confirmer.username }}</span
@@ -53,8 +53,8 @@ const formatDate = (isoDate: string) => {
           <span class="ml-2 badge badge-accent badge-xs align-middle">Bongsköterska</span></template
         >
       </div>
-      <p v-if="p.reason?.trim()" class="text-xs opacity-60 truncate mt-0.5">{{ p.reason }}</p>
-      <p v-else class="text-xs opacity-30 italic truncate mt-0.5">Ingen anledning</p>
+      <p v-if="p.reason?.trim()" class="text-xs opacity-60 line-clamp-2 mt-0.5">{{ p.reason }}</p>
+      <p v-else class="text-xs opacity-30 italic mt-0.5">Ingen anledning</p>
     </div>
 
     <!-- Right column: date + amount -->

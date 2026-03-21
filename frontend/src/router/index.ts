@@ -60,7 +60,7 @@ const router = createRouter({
       component: PeopleView,
       beforeEnter: async () => {
         const usersStore = useUsersStore();
-        if (!usersStore.loading) usersStore.fetch({ q: "", excludeMe: true });
+        if (!usersStore.loading) usersStore.fetch({ q: "", excludeMe: false });
       },
     },
     { path: "/users/:id", name: "user", component: ProfileView },

@@ -3,21 +3,27 @@ import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "@/stores/users";
+import { useAuthStore } from "@/stores/auth";
 import PunishmentIcon from "@/components/PunishmentIcon.vue";
 import ProfilePicture from "@/components/ProfilePicture.vue";
 
 const router = useRouter();
 const usersStore = useUsersStore();
+const authStore = useAuthStore();
 const { users, loading, error, ready } = storeToRefs(usersStore);
 
 const fallbackAvatar = "/kallan.svg";
 
 onMounted(() => {
-  if (!ready.value && !loading.value) usersStore.fetch({ excludeMe: true, limit: 50 });
+  if (!loading.value) usersStore.fetch({ excludeMe: false, limit: 50 });
 });
 
 function openUser(id: number) {
-  router.push({ name: "user", params: { id } });
+  if (id === authStore.user?.id) {
+    router.push({ name: "home" });
+  } else {
+    router.push({ name: "user", params: { id } });
+  }
 }
 
 const TIER_GROUPS = [
