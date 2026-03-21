@@ -25,7 +25,7 @@ export default defineConfig({
 
       registerType: "autoUpdate",
 
-      includeAssets: ["favicon.ico", "apple-touch-icon-180x180.png", "maskable-icon-512x512.png"],
+      includeAssets: ["favicon.ico", "apple-touch-icon-180x180-v2.png", "maskable-icon-512x512-v2.png"],
       manifest: {
         name: "kallan",
         short_name: "kallan",
@@ -33,11 +33,11 @@ export default defineConfig({
         theme_color: "#110d0d",
         background_color: "#110d0d",
         icons: [
-          { src: "pwa-64x64.png", sizes: "64x64", type: "image/png" },
-          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "pwa-64x64-v2.png", sizes: "64x64", type: "image/png" },
+          { src: "pwa-192x192-v2.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512-v2.png", sizes: "512x512", type: "image/png", purpose: "any" },
           {
-            src: "maskable-icon-512x512.png",
+            src: "maskable-icon-512x512-v2.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",

@@ -16,7 +16,7 @@ self.addEventListener("push", (event) => {
   const title = data.title || "Notis";
   const options: NotificationOptions = {
     body: data.body || "",
-    icon: data.icon || "/pwa-192x192.png",
+    icon: data.icon || "/pwa-192x192-v2.png",
     data: { url: data.url || "/" },
   };
 
